@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="tok" content="__TOKEN__">
+<title>PyLocal Studio</title>
+<style>
+:root{--bg:#14181f;--panel:#1b212b;--bd:#2c3542;--fg:#d7dee8;--dim:#7d8a9b;--acc:#4aa3df;--run:#2f9e63;--stop:#d9534f;--err:#ff7b72;--inp:#e3b341;
+--k:#ff7b72;--s:#a5d6a7;--c:#7d8a9b;--n:#79c0ff;--b:#d2a8ff;--f:#ffd479;--d:#e3b341;--mono:ui-monospace,SFMono-Regular,Menlo,Consolas,"DejaVu Sans Mono",monospace;--sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;--th:240px}
+[data-theme=light]{--bg:#fbfbf8;--panel:#eeeee8;--bd:#d3d3c8;--fg:#24292f;--dim:#6b7280;--acc:#0b6bcb;--run:#1a7f4b;--stop:#c0392b;--err:#c62828;--inp:#9a6700;
+--k:#c62828;--s:#1b6b2f;--c:#6b7280;--n:#0550ae;--b:#7b3fb5;--f:#8a5a00;--d:#9a6700}
+*{box-sizing:border-box}html,body{height:100%;margin:0}
+body{display:flex;flex-direction:column;background:var(--bg);color:var(--fg);font:14px var(--sans)}
+header{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:6px 10px;background:var(--panel);border-bottom:1px solid var(--bd)}
+h1{font-size:15px;margin:0 8px 0 0;letter-spacing:.2px}h1 span{color:var(--acc)}
+button,select,input.fn{font:inherit;color:var(--fg);background:var(--bg);border:1px solid var(--bd);border-radius:6px;padding:5px 10px;cursor:pointer}
+button:hover:not(:disabled){border-color:var(--acc)}button:disabled{opacity:.4;cursor:not-allowed}
+:focus-visible{outline:2px solid var(--acc);outline-offset:1px}
+#run{background:var(--run);border-color:var(--run);color:#fff;font-weight:600}#stop{background:var(--stop);border-color:var(--stop);color:#fff}
+input.fn{cursor:text;width:150px;font-family:var(--mono)}.sp{flex:1}
+main{flex:1;display:flex;flex-direction:column;min-height:0}
+.ed{flex:1;display:flex;min-height:80px;position:relative;overflow:hidden;font:14px/20px var(--mono)}
+.gut{width:48px;overflow:hidden;flex:none;border-right:1px solid var(--bd);color:var(--dim);text-align:right;background:var(--panel)}
+.gut pre,.cw pre,textarea{margin:0;padding:8px 12px;font:inherit;tab-size:4;white-space:pre}
+.gut pre{padding:8px 8px}
+.cw{flex:1;position:relative;overflow:hidden}
+#hl{position:absolute;top:0;left:0;pointer-events:none;min-width:100%}
+#ta{position:absolute;inset:0;width:100%;height:100%;border:0;outline:0;resize:none;background:transparent;color:transparent;caret-color:var(--fg);overflow:auto}
+#ta::selection{background:#4aa3df55;color:transparent}
+.k{color:var(--k)}.s{color:var(--s)}.c{color:var(--c);font-style:italic}.n{color:var(--n)}.b{color:var(--b)}.f{color:var(--f)}.d{color:var(--d)}
+#split{height:7px;cursor:row-resize;background:var(--panel);border-block:1px solid var(--bd);touch-action:none}
+#term{height:var(--th);display:flex;flex-direction:column;background:var(--bg);min-height:0}
+#term.collapsed{height:0;overflow:hidden}
+.th{display:flex;align-items:center;gap:8px;padding:4px 10px;background:var(--panel);font-size:12px;color:var(--dim)}
+#out{flex:1;overflow:auto;margin:0;padding:8px 12px;font:13px/1.45 var(--mono);white-space:pre-wrap;word-break:break-word}
+.o{color:var(--fg)}.e{color:var(--err)}.i{color:var(--inp)}.y{color:var(--dim)}.ok{color:var(--run)}
+.inb{display:flex;gap:6px;padding:6px 10px;border-top:1px solid var(--bd);align-items:center}
+.inb input{flex:1;font:13px var(--mono);color:var(--fg);background:var(--panel);border:1px solid var(--bd);border-radius:6px;padding:6px 8px}
+footer{display:flex;gap:14px;padding:3px 10px;background:var(--acc);color:#fff;font-size:12px}
+footer .sp{flex:1}
+@media(max-width:700px){.lbl{display:none}input.fn{width:110px}}
+</style>
+</head>
+<body>
+<header>
+  <h1>Py<span>Local</span> Studio</h1>
+  <button id="run" title="Run (Ctrl+Enter)">▶ Run</button>
+  <button id="stop" title="Stop the program" disabled>■ Stop</button>
+  <input class="fn" id="fname" value="main.py" aria-label="File name" spellcheck="false">
+  <span id="dirty" class="y" hidden>●</span>
+  <select id="ex" aria-label="Load example"><option value="">Examples…</option></select>
+  <button id="new" title="New file">New</button>
+  <button id="open" title="Open a .py file">Open</button>
+  <button id="save" title="Save in this browser (Ctrl+S)">Save</button>
+  <button id="dl" title="Download .py">Download</button>
+  <button id="copy" title="Copy code">Copy</button>
+  <span class="sp"></span>
+  <button id="theme" title="Toggle theme" aria-label="Toggle theme">◐</button>
+  <input type="file" id="file" accept=".py,.txt,text/*" hidden>
+</header>
+<main>
+  <div class="ed">
+    <div class="gut" aria-hidden="true"><pre id="ln">1</pre></div>
+    <div class="cw"><pre id="hl" aria-hidden="true"></pre>
+      <textarea id="ta" spellcheck="false" autocapitalize="off" autocomplete="off" wrap="off" aria-label="Python code editor"></textarea></div>
+  </div>
+  <div id="split" role="separator" aria-label="Resize terminal"></div>
+  <section id="term" aria-label="Terminal">
+    <div class="th"><b>TERMINAL</b><span class="sp"></span><button id="clear" title="Clear output">Clear</button><button id="fold" title="Collapse/expand terminal">▾</button></div>
+    <pre id="out" role="log" aria-live="polite"></pre>
+    <div class="inb"><span class="y">stdin ›</span><input id="in" disabled placeholder="Runs when a program is waiting for input — Enter to send, Ctrl+D = end of input" aria-label="Program input"></div>
+  </section>
+</main>
+<footer><span id="status">Ready</span><span class="sp"></span><span id="pos">Ln 1, Col 1</span><span id="info"></span></footer>
+<script>
+"use strict";
+const $=s=>document.querySelector(s),TOKEN=$('meta[name=tok]').content,LS=localStorage;
+const api=(p,b)=>fetch(p,{method:b?'POST':'GET',headers:{'X-Token':TOKEN,'Content-Type':'application/json'},body:b?JSON.stringify(b):undefined})
+  .then(async r=>{let j={};try{j=await r.json()}catch(_){}if(!r.ok)throw new Error(j.error||('HTTP '+r.status));return j});
+const ta=$('#ta'),hl=$('#hl'),ln=$('#ln'),out=$('#out'),inp=$('#in');
+
+/* ---------- syntax highlighting (own tokenizer, no libraries) ---------- */
+const KW=new Set('and as assert async await break class continue def del elif else except finally for from global if import in is lambda nonlocal not or pass raise return try while with yield True False None'.split(' '));
+const BI=new Set('abs all any bin bool bytes callable chr dict dir divmod enumerate filter float format frozenset getattr hasattr hash hex id input int isinstance issubclass iter len list map max min next object oct open ord pow print range repr reversed round set setattr slice sorted str sum super tuple type vars zip self cls'.split(' '));
+const RE=/(#[^\n]*)|((?:[rRbBuUfF]{1,2})?(?:"""[\s\S]*?(?:"""|$)|'''[\s\S]*?(?:'''|$)))|((?:[rRbBuUfF]{1,2})?(?:"(?:\\.|[^"\\\n])*"?|'(?:\\.|[^'\\\n])*'?))|(@[A-Za-z_][\w.]*)|(\b(?:0[xX][\da-fA-F_]+|0[bB][01_]+|0[oO][0-7_]+|\d[\d_]*(?:\.[\d_]*)?(?:[eE][+-]?\d+)?[jJ]?))|([A-Za-z_]\w*)/g;
+const esc=t=>t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+function highlight(t){let o='',i=0,prev='',m;RE.lastIndex=0;
+  while((m=RE.exec(t))){o+=esc(t.slice(i,m.index));i=RE.lastIndex;const s=m[0];let c='';
+    if(m[1])c='c';else if(m[2]||m[3])c='s';else if(m[4])c='d';else if(m[5])c='n';
+    else{c=KW.has(s)?'k':BI.has(s)?'b':(prev==='def'||prev==='class')?'f':'';}
+    prev=m[6]?s:'';o+=c?`<span class="${c}">${esc(s)}</span>`:esc(s);}
+  return o+esc(t.slice(i))+'\n';}
+let raf=0;
+function render(){raf=0;const v=ta.value;hl.innerHTML=highlight(v);
+  const n=v.split('\n').length;if(ln.dataset.n!=n){ln.dataset.n=n;ln.textContent=Array.from({length:n},(_,i)=>i+1).join('\n');}
+  sync();pos();checkDirty();}
+const sync=()=>{hl.style.transform=`translate(${-ta.scrollLeft}px,${-ta.scrollTop}px)`;ln.style.transform=`translateY(${-ta.scrollTop}px)`};
+const pos=()=>{const b=ta.value.slice(0,ta.selectionStart).split('\n');$('#pos').textContent=`Ln ${b.length}, Col ${b[b.length-1].length+1}`};
+const upd=()=>{if(!raf)raf=requestAnimationFrame(render);LS.setItem('pl.draft',ta.value);LS.setItem('pl.name',fname())};
+ta.addEventListener('scroll',sync);ta.addEventListener('input',upd);
+['keyup','click','focus'].forEach(e=>ta.addEventListener(e,pos));
+function ins(t){ta.focus();if(!document.execCommand('insertText',false,t)){ta.setRangeText(t,ta.selectionStart,ta.selectionEnd,'end');upd();}}
+function indent(back){const v=ta.value;let a=ta.selectionStart,b=ta.selectionEnd;
+  if(!back&&a===b)return ins('    ');
+  const ls=v.lastIndexOf('\n',a-1)+1;let le=v.indexOf('\n',b);if(le<0)le=v.length;
+  const blk=v.slice(ls,le),nb=back?blk.replace(/^( {1,4}|\t)/gm,''):blk.replace(/^/gm,'    ');
+  ta.setSelectionRange(ls,le);ins(nb);ta.setSelectionRange(ls,ls+nb.length);}
+ta.addEventListener('keydown',e=>{const mod=e.ctrlKey||e.metaKey;
+  if(e.key==='Tab'&&!mod){e.preventDefault();indent(e.shiftKey);}
+  else if(e.key==='Enter'&&mod){e.preventDefault();run();}
+  else if(e.key==='Enter'&&!e.shiftKey&&!e.altKey){e.preventDefault();const b=ta.value.slice(0,ta.selectionStart),l=b.slice(b.lastIndexOf('\n')+1);
+    ins('\n'+l.match(/^ */)[0]+(/:\s*(#.*)?$/.test(l)?'    ':''));}
+  else if(e.key==='Backspace'&&ta.selectionStart===ta.selectionEnd){const b=ta.value.slice(0,ta.selectionStart),l=b.slice(b.lastIndexOf('\n')+1);
+    if(l.length&&/^ +$/.test(l)){e.preventDefault();ta.setSelectionRange(ta.selectionStart-((l.length-1)%4+1),ta.selectionStart);ins('');}}
+  else if(mod&&e.key==='s'){e.preventDefault();save();}
+  else if(mod&&e.key==='/'){e.preventDefault();toggleComment();}});
+function toggleComment(){const v=ta.value,a=ta.selectionStart,b=ta.selectionEnd,ls=v.lastIndexOf('\n',a-1)+1;let le=v.indexOf('\n',b);if(le<0)le=v.length;
+  const blk=v.slice(ls,le),all=blk.split('\n').filter(x=>x.trim()).every(x=>/^\s*#/.test(x));
+  const nb=blk.split('\n').map(x=>!x.trim()?x:all?x.replace(/^(\s*)# ?/,'$1'):x.replace(/^(\s*)/,'$1# ')).join('\n');
+  ta.setSelectionRange(ls,le);ins(nb);ta.setSelectionRange(ls,ls+nb.length);}
+
+/* ---------- files ---------- */
+const fname=()=>($('#fname').value.trim().replace(/[^\w.\- ]/g,'_')||'main')
+  .replace(/(\.py)?$/i,'.py');
+let saved='';
+const checkDirty=()=>{$('#dirty').hidden=ta.value===saved};
+function setCode(code,name){ta.value=code;saved=code;if(name)$('#fname').value=name;ta.scrollTo(0,0);render();upd();}
+function save(){LS.setItem('pl.saved',ta.value);LS.setItem('pl.savedname',fname());saved=ta.value;checkDirty();flash('Saved in this browser as '+fname());}
+const confirmLose=()=>ta.value===saved||confirm('You have unsaved changes. Discard them?');
+$('#new').onclick=()=>{if(confirmLose())setCode('','untitled.py')};
+$('#open').onclick=()=>$('#file').click();
+$('#file').onchange=e=>{const f=e.target.files[0];e.target.value='';if(!f||!confirmLose())return;
+  const r=new FileReader();r.onload=()=>setCode(String(r.result).replace(/\r\n/g,'\n'),f.name);r.readAsText(f);};
+$('#save').onclick=save;
+$('#dl').onclick=()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([ta.value],{type:'text/x-python'}));a.download=fname();a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),1000);saved=ta.value;checkDirty();};
+$('#copy').onclick=async()=>{try{await navigator.clipboard.writeText(ta.value)}catch(_){ta.select();document.execCommand('copy')}flash('Code copied');};
+$('#ex').onchange=async e=>{const f=e.target.value;e.target.value='';if(!f||!confirmLose())return;
+  try{const j=await api('/api/examples/'+f);setCode(j.code,f.replace(/^\d+_/,''));}catch(x){sys('✖ '+x.message,'e')}};
+window.addEventListener('beforeunload',e=>{if(ta.value!==saved){e.preventDefault();e.returnValue=''}});
+
+/* ---------- terminal ---------- */
+let pend=[],pRaf=0,total=0;const MAXCH=300000;
+function add(cls,text){pend.push([cls,text]);if(!pRaf)pRaf=requestAnimationFrame(flushOut);}
+function flushOut(){pRaf=0;const stick=out.scrollHeight-out.scrollTop-out.clientHeight<40;
+  for(const[c,t0]of pend){const t=t0.replace(/\x1b\[[0-9;?]*[A-Za-z]/g,'').replace(/\r\n?/g,'\n');if(!t)continue;
+    let last=out.lastChild;if(!last||last.className!==c){last=document.createElement('span');last.className=c;last.appendChild(document.createTextNode(''));out.appendChild(last);}
+    last.firstChild.appendData(t);total+=t.length;}
+  pend=[];
+  while(total>MAXCH&&out.firstChild){const f=out.firstChild,ex=total-MAXCH,l=f.textContent.length;
+    if(l<=ex){out.removeChild(f);total-=l;}else{f.firstChild.deleteData(0,ex);total-=ex;}}
+  if(stick)out.scrollTop=out.scrollHeight;}
+function sys(t,c){const need=out.lastChild&&!/\n$/.test(out.textContent.slice(-1))?'\n':'';add(c||'y',need+t+'\n');}
+$('#clear').onclick=()=>{out.textContent='';total=0;pend=[];};
+$('#fold').onclick=()=>{const c=$('#term').classList.toggle('collapsed');$('#fold').textContent=c?'▴':'▾';};
+$('#split').addEventListener('pointerdown',e=>{e.target.setPointerCapture(e.pointerId);$('#term').classList.remove('collapsed');
+  const mv=ev=>{const h=window.innerHeight-ev.clientY-$('footer').offsetHeight;document.documentElement.style.setProperty('--th',Math.min(Math.max(h,60),window.innerHeight-160)+'px')};
+  const up=()=>{removeEventListener('pointermove',mv);removeEventListener('pointerup',up)};addEventListener('pointermove',mv);addEventListener('pointerup',up);});
+let tm;function flash(t){setStatus(t);clearTimeout(tm);tm=setTimeout(()=>{if(!running)setStatus('Ready')},2500)}
+const setStatus=t=>$('#status').textContent=t;
+
+/* ---------- execution ---------- */
+let es=null,sid=null,running=false;
+function setRun(r){running=r;$('#run').disabled=r;$('#stop').disabled=!r;inp.disabled=!r;
+  inp.placeholder=r?'Type input for the program — Enter to send, Ctrl+D = end of input':'Runs when a program is waiting for input';if(r){setStatus('Running…');inp.focus()}}
+async function run(){if(running)return;
+  if(!ta.value.trim()){sys('Nothing to run — the editor is empty.','e');setStatus('Empty program');return;}
+  setRun(true);sys(`▶ Running ${fname()}`);
+  try{const j=await api('/api/run',{code:ta.value});sid=j.id;
+    es=new EventSource(`/api/stream/${sid}?token=${encodeURIComponent(TOKEN)}`);
+    es.onmessage=e=>{const m=JSON.parse(e.data);
+      if(m.t==='out')add('o',m.d);else if(m.t==='err')add('e',m.d);else if(m.t==='exit'){es.close();finish(m)}};
+    es.onerror=()=>{if(running){es.close();sys('✖ Lost connection to the local server.','e');setRun(false);setStatus('Disconnected')}};
+  }catch(x){sys('✖ '+x.message,'e');setRun(false);setStatus('Error')}}
+function finish(m){const s=m.secs+'s';
+  const msg={stopped:['■ Process terminated by user ('+s+')','y','Stopped'],timeout:['⏱ Time limit reached — process killed ('+s+')','e','Timed out'],
+    'output-limit':['✖ Output limit exceeded — process killed','e','Output limit'],disconnected:['Disconnected','y','Stopped']}[m.reason]
+    ||(m.code===0?[`✔ Process finished with exit code 0 (${s})`,'ok','Finished']:[`✖ Process finished with exit code ${m.code} (${s})`,'e','Error (exit '+m.code+')']);
+  sys(msg[0],msg[1]);setRun(false);setStatus(msg[2]);}
+$('#run').onclick=run;
+$('#stop').onclick=()=>{if(sid)api('/api/stop/'+sid,{}).catch(()=>{})};
+inp.addEventListener('keydown',async e=>{
+  if(e.key==='Enter'&&running){e.preventDefault();const v=inp.value;inp.value='';add('i',v+'\n');
+    try{await api('/api/input/'+sid,{text:v+'\n'})}catch(_){}}
+  else if(e.key==='d'&&e.ctrlKey&&running){e.preventDefault();add('y','^D\n');try{await api('/api/input/'+sid,{eof:true})}catch(_){}}});
+addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key==='Enter'){e.preventDefault();run()}});
+
+/* ---------- theme & startup ---------- */
+function theme(t){document.documentElement.dataset.theme=t;LS.setItem('pl.theme',t)}
+$('#theme').onclick=()=>theme(document.documentElement.dataset.theme==='dark'?'light':'dark');
+theme(LS.getItem('pl.theme')||(matchMedia('(prefers-color-scheme: light)').matches?'light':'dark'));
+$('#fname').addEventListener('change',upd);
+(async()=>{
+  saved=LS.getItem('pl.saved')||'';
+  ta.value=LS.getItem('pl.draft')??'print("Hello, World!")\n';$('#fname').value=LS.getItem('pl.name')||'main.py';render();
+  try{const [i,ex]=await Promise.all([api('/api/info'),api('/api/examples')]);
+    $('#info').textContent=`Python ${i.python} · local · limit ${i.timeout}s`;
+    $('#ex').append(...ex.map(x=>Object.assign(document.createElement('option'),{value:x.file,textContent:x.title})));
+    sys(`PyLocal Studio ready — real Python ${i.python}. Press Run or Ctrl+Enter.`);
+  }catch(x){sys('✖ Cannot reach the local server: '+x.message,'e');setStatus('Server unreachable')}
+})();
+</script>
+</body>
+</html>
